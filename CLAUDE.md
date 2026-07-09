@@ -104,6 +104,18 @@ failing fails the whole build) → `runtime` (non-root user `waypoint` at fixed 
 the test stage, never test files themselves). `HEALTHCHECK` hits `/healthz` with a Python
 `urllib` one-liner (no `curl`/`wget` in `python:3.12-slim`).
 
+### Branching, versioning & release pipeline
+
+`develop` is the integration branch (feature branches → PR → `develop`); `main` only moves via a
+PR from `develop`. `.github/workflows/ci.yml` runs the `test` job on every push/PR regardless of
+branch, but the `release` (python-semantic-release, `pyproject.toml`'s `[tool.semantic_release]`)
+and `build` (multi-arch Docker build + push to GHCR) jobs are gated on `github.ref ==
+'refs/heads/main'` and on `release` actually having cut a new version, respectively — so pushing to
+`develop` never builds or publishes anything. The version lives in `waypoint/__init__.py`
+(`__version__`) and is bumped automatically from Conventional Commit prefixes (`fix:`, `feat:`,
+`BREAKING CHANGE:`) since the last `vX.Y.Z` tag; don't hand-edit it or hand-create release tags —
+that's what causes the version and the Docker tags to drift apart.
+
 ## Invariants to preserve when editing
 
 - Every branch through `EmailMonitor.process_new_emails` must still move the processed UID to

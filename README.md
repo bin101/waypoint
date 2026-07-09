@@ -172,6 +172,32 @@ The test suite covers the pure link-extraction and page-rendering logic (using a
 Garmin LiveTrack email fixture, see `tests/fixtures/`), the persisted state, IMAP config validation,
 and the web routes (via Flask's test client) — all without needing a real IMAP or SMTP server.
 
+### Branching and releases
+
+- `develop` is the integration branch — feature branches and day-to-day work target `develop` via
+  PR. Pushes here (and PRs) only run the test suite; nothing gets built or published.
+- `main` only ever moves forward via a PR from `develop`. A push to `main` additionally runs
+  [python-semantic-release](https://python-semantic-release.readthedocs.io/), which inspects the
+  [Conventional Commits](https://www.conventionalcommits.org/) merged in since the last `vX.Y.Z`
+  tag and, if they warrant a release, bumps `waypoint/__init__.py`, updates `CHANGELOG.md`, and
+  pushes the new tag + GitHub Release.
+- Only that release step (never a plain push) triggers the multi-arch Docker build and publish to
+  GHCR — see `.github/workflows/ci.yml`.
+- Commit messages therefore need a Conventional Commits prefix for the release step to pick them
+  up correctly: `fix:` → patch, `feat:` → minor, `BREAKING CHANGE:` (in the footer) → major.
+  Anything else (`chore:`, `docs:`, `test:`, ...) is ignored for versioning purposes.
+
+## Troubleshooting
+
+**Browser console shows `net::ERR_BLOCKED_BY_CLIENT`.** This is not a server/reverse-proxy issue —
+Waypoint doesn't ship or require any nginx config, and this error never comes from the server; the
+browser generates it locally, before the request even leaves the machine. It means a client-side
+ad/tracker blocker (uBlock Origin, Brave Shields, Pi-hole-style browser extensions, ...) intercepted
+a request. Garmin's `livetrack.garmin.com` URLs contain the substring `track`, which matches generic
+tracker-blocklist rules in some filter lists, so the extension blocks the iframe/redirect target
+itself. Check the failing request's URL in the Network tab to confirm, then allow-list
+`livetrack.garmin.com` in the blocker — there's nothing to change in Waypoint's own config for this.
+
 ## Security notes
 
 - Credentials are only ever read from environment variables (typically via `.env`, which is
