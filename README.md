@@ -177,17 +177,20 @@ and the web routes (via Flask's test client) — all without needing a real IMAP
 ### Branching and releases
 
 - `develop` is the integration branch — feature branches and day-to-day work target `develop` via
-  PR. Pushes here (and PRs) only run the test suite; nothing gets built or published.
-- `main` only ever moves forward via a PR from `develop`. A push to `main` additionally runs
-  [python-semantic-release](https://python-semantic-release.readthedocs.io/), which inspects the
-  [Conventional Commits](https://www.conventionalcommits.org/) merged in since the last `vX.Y.Z`
-  tag and, if they warrant a release, bumps `waypoint/__init__.py`, updates `CHANGELOG.md`, and
-  pushes the new tag + GitHub Release.
-- Only that release step (never a plain push) triggers the multi-arch Docker build and publish to
-  GHCR — see `.github/workflows/ci.yml`.
-- Commit messages therefore need a Conventional Commits prefix for the release step to pick them
-  up correctly: `fix:` → patch, `feat:` → minor, `BREAKING CHANGE:` (in the footer) → major.
-  Anything else (`chore:`, `docs:`, `test:`, ...) is ignored for versioning purposes.
+  PR. Pushes here (and PRs) only run the test suite (`.github/workflows/ci.yml`); nothing gets
+  built or released.
+- `main` only ever moves forward via a PR from `develop`. Every push to `main` runs
+  [Release Please](https://github.com/googleapis/release-please)
+  (`.github/workflows/release-please.yml`), which inspects the
+  [Conventional Commits](https://www.conventionalcommits.org/) merged in since the last release and
+  keeps a standing **release PR** up to date with the accumulated version bump and `CHANGELOG.md`
+  entry — it never pushes to `main` directly.
+- Merging that release PR (like any other PR, via review) is what actually cuts the `vX.Y.Z` tag +
+  GitHub Release. Only that tag push triggers `.github/workflows/publish.yml`, which builds the
+  multi-arch image and publishes it to GHCR — a plain commit landing on `main` never does.
+- Commit messages need a Conventional Commits prefix for Release Please to pick them up correctly:
+  `fix:` → patch, `feat:` → minor, `BREAKING CHANGE:` (in the footer) → major. Anything else
+  (`chore:`, `docs:`, `test:`, ...) is included in the changelog but doesn't bump the version.
 
 ## Troubleshooting
 

@@ -107,14 +107,21 @@ the test stage, never test files themselves). `HEALTHCHECK` hits `/healthz` with
 ### Branching, versioning & release pipeline
 
 `develop` is the integration branch (feature branches → PR → `develop`); `main` only moves via a
-PR from `develop`. `.github/workflows/ci.yml` runs the `test` job on every push/PR regardless of
-branch, but the `release` (python-semantic-release, `pyproject.toml`'s `[tool.semantic_release]`)
-and `build` (multi-arch Docker build + push to GHCR) jobs are gated on `github.ref ==
-'refs/heads/main'` and on `release` actually having cut a new version, respectively — so pushing to
-`develop` never builds or publishes anything. The version lives in `waypoint/__init__.py`
-(`__version__`) and is bumped automatically from Conventional Commit prefixes (`fix:`, `feat:`,
-`BREAKING CHANGE:`) since the last `vX.Y.Z` tag; don't hand-edit it or hand-create release tags —
-that's what causes the version and the Docker tags to drift apart.
+PR from `develop`. Three separate workflows split the concerns:
+
+- `.github/workflows/ci.yml` — the `test` job, on every push (`main`/`develop`) and every PR.
+- `.github/workflows/release-please.yml` — runs
+  [Release Please](https://github.com/googleapis/release-please) (config:
+  `release-please-config.json` + `.release-please-manifest.json`) on every push to `main`. It never
+  pushes to `main` directly: it maintains a standing release PR (version bump + `CHANGELOG.md`)
+  from Conventional Commits (`fix:`, `feat:`, `BREAKING CHANGE:`) and only cuts the `vX.Y.Z` tag +
+  GitHub Release once that PR is actually merged.
+- `.github/workflows/publish.yml` — triggers only on a `vX.Y.Z` tag push (i.e. only once
+  release-please has cut a release) and does the multi-arch Docker build + push to GHCR.
+
+The version lives in `waypoint/__init__.py` (`__version__`, marked with a trailing
+`# x-release-please-version` comment that release-please's generic file updater matches on) — don't
+hand-edit it or hand-create release tags, or the version, the tag, and `CHANGELOG.md` drift apart.
 
 ## Invariants to preserve when editing
 
