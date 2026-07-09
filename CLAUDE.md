@@ -134,3 +134,19 @@ that's what causes the version and the Docker tags to drift apart.
 - `probe_iframe_embeddable` must never raise and must default to `False` (redirect) on any
   ambiguity (network error, timeout, non-2xx, unparseable header) — the redirect page is the one
   path that always works, so failure must never accidentally select the iframe path instead.
+- `render_page` must keep escaping `link` for HTML-attribute contexts (`html.escape(..., quote=True)`
+  → `link_attr`) and JSON-encoding it for the inline-JS context (`json.dumps` → `link_js`) — never
+  interpolate the raw string again. The admin override isn't guaranteed to match
+  `LIVETRACK_LINK_RE`, so this is the only thing standing between an admin-set value containing
+  quotes/`<>` and breaking out of an attribute or the JS string literal.
+- `/admin/link` must keep rejecting (`400`) any submitted link that doesn't fullmatch
+  `LIVETRACK_LINK_RE` before it ever reaches `state.set_link`/`probe()` — this is what keeps the
+  admin override from being usable to probe/redirect to arbitrary internal URLs.
+- `_check_auth` must keep using `secrets.compare_digest`, not `==`, for both the username and
+  password comparison.
+- `__main__.py` starts the server via `waitress.create_server(...)` + `server.run()`, not the
+  `serve()` shortcut — the signal handler needs a `server` handle to call `.close()` on. Without
+  it, SIGTERM is silently swallowed by `handle_signal` and the container only stops on Docker's
+  SIGKILL, skipping `EmailMonitor`'s clean IMAP logout.
+- The `Dockerfile`'s `HEALTHCHECK` reads `WEB_PORT` from the environment at check time (defaulting
+  to `8080`) rather than hard-coding a port — keep it that way if `WEB_PORT` stays configurable.

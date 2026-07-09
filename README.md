@@ -125,7 +125,9 @@ At `/admin` (Basic Auth):
 - **Status dashboard** — current link, when it was last updated, IMAP connection status, last
   error.
 - **Manual override** — set the current link directly, or clear it (e.g. to show the "offline"
-  page when no activity is live).
+  page when no activity is live). The link must match the same
+  `https://livetrack.garmin.com/session/.../token/...` shape as an email-extracted one (`400` on
+  anything else).
 - **Recent history** — the last 20 links that were published, with timestamp and source
   (`email` or `admin`), including whether each was served as an iframe or a redirect.
 

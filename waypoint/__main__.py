@@ -11,7 +11,7 @@ import sys
 import threading
 
 from dotenv import load_dotenv
-from waitress import serve
+from waitress import create_server
 
 from .config import Config
 from .email_monitor import EmailMonitor
@@ -47,9 +47,20 @@ def main() -> None:
 
     monitor = EmailMonitor(config, state)
 
+    app = create_app(config, state)
+    # create_server (rather than the serve() shortcut) gives us a handle to
+    # close from the signal handler -- serve() blocks forever and installs
+    # no signal handling of its own, so without this, SIGTERM would just get
+    # silently overridden by handle_signal below and the container would
+    # sit until Docker's SIGKILL, skipping the monitor's clean IMAP logout.
+    server = create_server(app, host="0.0.0.0", port=config.web_port)
+    shutting_down = threading.Event()
+
     def handle_signal(signum, frame):
         log.info("Shutting down Garmin LiveTrack...")
         monitor.stop()
+        shutting_down.set()
+        server.close()
 
     signal.signal(signal.SIGINT, handle_signal)
     signal.signal(signal.SIGTERM, handle_signal)
@@ -57,9 +68,22 @@ def main() -> None:
     monitor_thread = threading.Thread(target=monitor.run, name="email-monitor", daemon=True)
     monitor_thread.start()
 
-    app = create_app(config, state)
     log.info(f"Starting web server on port {config.web_port}...")
-    serve(app, host="0.0.0.0", port=config.web_port)
+    try:
+        server.run()
+    except OSError:
+        # server.close() (above) closes the listening socket while
+        # server.run()'s select() loop may be blocked on it -- waitress
+        # surfaces that as a "Bad file descriptor" OSError rather than a
+        # clean return. That's expected once we've asked for a shutdown;
+        # anything else is a real failure and should still propagate.
+        if not shutting_down.is_set():
+            raise
+        log.info("Web server stopped.")
+    finally:
+        # Give the monitor thread a chance to finish process_new_emails()
+        # and log out of IMAP cleanly before the process exits.
+        monitor_thread.join(timeout=15)
 
 
 if __name__ == "__main__":
