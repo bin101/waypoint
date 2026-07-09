@@ -145,6 +145,28 @@ def test_admin_set_link_probes_embeddability(config, state):
     assert state.iframe_ok is False
 
 
+def test_admin_set_link_rejects_non_livetrack_url(client, state):
+    resp = client.post(
+        "/admin/link",
+        data={"link": "javascript:alert(1)"},
+        headers=_basic_auth_header("admin", "s3cret"),
+    )
+
+    assert resp.status_code == 400
+    assert state.current_link is None
+
+
+def test_admin_set_link_rejects_non_garmin_domain(client, state):
+    resp = client.post(
+        "/admin/link",
+        data={"link": "https://evil.example/session/a/token/1"},
+        headers=_basic_auth_header("admin", "s3cret"),
+    )
+
+    assert resp.status_code == 400
+    assert state.current_link is None
+
+
 def test_admin_can_clear_link(client, state):
     state.set_link("https://livetrack.garmin.com/session/c/token/3", source="email", iframe_ok=True)
 
