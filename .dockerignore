@@ -1,0 +1,27 @@
+# Keep the build context small and never let local secrets/state leak into
+# an image layer.
+.env
+.env.*
+!.env.example
+data/
+*.eml
+!tests/fixtures/*.eml
+
+# VCS / CI
+.git/
+.github/
+
+# Docs / planning (not needed inside the image)
+*.md
+LICENSE
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+*.egg-info/
+
+# IDEs
+.vscode/
+.idea/

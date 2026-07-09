@@ -1,0 +1,168 @@
+Return-Path: <noreply@garmin.com>
+X-Spam-Checker-Version: SpamAssassin 3.4.6 (2021-04-09) on
+	mail.example.com
+X-Original-To: garmin_livetrack@example.com
+Delivered-To: mail@example.com
+Authentication-Results: mail.example.com;
+	dkim=pass (2048-bit key; unprotected) header.d=garmin.com header.i=@garmin.com header.a=rsa-sha256 header.s=gcs9 header.b=SANITIZED;
+	dkim-atps=neutral
+X-policyd-weight: using cached result; rate: -7
+Received: from extedge.garmin.com (extedge.garmin.com [203.0.113.10])
+	by mail.example.com (Postfix) with ESMTPS id B016C3C402C6
+	for <garmin_livetrack@example.com>; Sun,  5 Jul 2026 08:50:30 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; d=garmin.com; s=gcs9; c=relaxed/relaxed;
+	t=1783234228; h=from:subject:to:date:accept-language;
+	bh=SANITIZED=;
+	b=SANITIZED==
+Received: from communication-services-cv1-prod-example (10.0.0.1)
+ by edgeconn.garmin.com (10.0.0.2) with Microsoft SMTP Server id
+ 15.2.2562.17; Sun, 5 Jul 2026 01:50:28 -0500
+Date: Sun, 5 Jul 2026 06:50:28 +0000
+From: Garmin <noreply@garmin.com>
+To: <garmin_livetrack@example.com>
+Message-ID: <109507353.386527.1783234228866@communication-services-cv1-prod-example>
+Subject: Watch Alex 's LiveTrack
+MIME-Version: 1.0
+Content-Type: multipart/related;
+	boundary="----=_Part_386526_778672611.1783234228862"
+X-Spamd-Bar: /
+X-Dmarc-Test: Allow
+X-KasLoop: example
+
+------=_Part_386526_778672611.1783234228862
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<!doctype html>
+<html lang=3D"und" dir=3D"auto" xmlns=3D"http://www.w3.org/1999/xhtml" xmln=
+s:v=3D"urn:schemas-microsoft-com:vml" xmlns:o=3D"urn:schemas-microsoft-com:=
+office:office">
+  <head>
+    <title></title>
+    <!--[if !mso]><!-->
+    <meta http-equiv=3D"X-UA-Compatible" content=3D"IE=3Dedge">
+    <!--<![endif]-->
+    <meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3DUTF-8=
+">
+    <meta name=3D"viewport" content=3D"width=3Ddevice-width, initial-scale=
+=3D1">
+    <style type=3D"text/css">
+      #outlook a { padding:0; }
+      body { margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size=
+-adjust:100%; }
+      table, td { border-collapse:collapse;mso-table-lspace:0pt;mso-table-r=
+space:0pt; }
+      img { border:0;height:auto;line-height:100%; outline:none;text-decora=
+tion:none;-ms-interpolation-mode:bicubic; }
+      p { display:block;margin:13px 0; }
+    </style>
+    <!--[if mso]>
+    <noscript>
+    <xml>
+    <o:OfficeDocumentSettings>
+      <o:AllowPNG/>
+      <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+    </xml>
+    </noscript>
+    <![endif]-->
+  </head>
+  <body style=3D"word-spacing:normal;background-color:#EFEFEF;">
+   =20
+      <div
+         aria-roledescription=3D"email" class=3D"main-body" style=3D"backgr=
+ound-color:#EFEFEF;" role=3D"article" lang=3D"und" dir=3D"auto"
+      >
+       =20
+      <table
+         align=3D"center" border=3D"0" cellpadding=3D"0" cellspacing=3D"0" =
+role=3D"presentation" style=3D"background:#ffffff;background-color:#ffffff;=
+width:100%;"
+      >
+        <tbody>
+          <tr>
+            <td>
+             =20
+      <img
+         alt=3D"" src=3D"https://connect.garmin.com/images/livetrack/livetr=
+ackLogo.png" style=3D"border:0;display:block;outline:none;text-decoration:n=
+one;height:16px;width:100%;font-size:13px;" width=3D"191" height=3D"16"
+      />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <table
+         border=3D"0" cellpadding=3D"0" cellspacing=3D"0" role=3D"presentat=
+ion" width=3D"100%"
+      >
+        <tbody>
+          <tr>
+            <td  style=3D"vertical-align:top;padding:8px;">
+             =20
+      <img
+         alt=3D"Alex" src=3D"https://s3.amazonaws.com/garmin-connect-prod/p=
+rofile_images/00000000-0000-0000-0000-000000000000-prth.png" style=3D"borde=
+r:0;border-radius:50%;display:block;outline:none;text-decoration:none;heigh=
+t:auto;width:100%;font-size:13px;" width=3D"60" height=3D"auto"
+      />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div
+         style=3D"font-family:&#x27;Open Sans&#x27;, Helvetica, Arial, sans=
+-serif;;font-size:16px;font-weight:700;line-height:1.4;text-align:left;colo=
+r:#f4f4f4;"
+      >Alex  started an activity</div>
+      <div
+         style=3D"font-family:&#x27;Open Sans&#x27;, Helvetica, Arial, sans=
+-serif;;font-size:12px;line-height:20px;text-align:left;color:#f4f4f4;"
+      >Follow their location and stats on LiveTrack.</div>
+      <table
+         border=3D"0" cellpadding=3D"0" cellspacing=3D"0" role=3D"presentat=
+ion" style=3D"border-collapse:separate;line-height:100%;"
+      >
+        <tbody>
+          <tr>
+            <td
+               align=3D"center" bgcolor=3D"#1976D2" role=3D"presentation" s=
+tyle=3D"border:none;border-radius:3px;cursor:auto;mso-padding-alt:8px 16px;=
+background:#1976D2;" valign=3D"middle"
+            >
+              <a
+                 href=3D"https://livetrack.garmin.com/session/11111111-222=
+2-3333-4444-555555555555/token/ABCDEF0123456789ABCDEF0123456789" style=3D"di=
+splay:inline-block;background:#1976D2;color:#ffffff;font-family:&#x27;Open =
+Sans&#x27;, Helvetica, Arial, sans-serif;;font-size:14px;font-weight:normal=
+;line-height:21px;margin:0;text-decoration:none;text-transform:none;padding=
+:8px 16px;mso-padding-alt:0px;border-radius:3px;" target=3D"_blank"
+              >
+                View Activity on LiveTrack
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div
+         style=3D"font-family:&#x27;Open Sans&#x27;, Helvetica, Arial, sans=
+-serif;;font-size:12px;line-height:20px;text-align:left;color:#6C6C6C;"
+      ><a target=3D"_blank" rel=3D"noopener noreferrer" href=3D"https://con=
+nect.garmin.com/emergency-contacts/livetrack?token=3DSANITIZED">Unsubscribe=
+</a> from LiveTrack updates from Alex.</div>
+      <div
+         style=3D"font-family:&#x27;Open Sans&#x27;, Helvetica, Arial, sans=
+-serif;;font-size:12px;line-height:20px;text-align:left;color:#6C6C6C;"
+      >Do not reply to this message. It was sent from a notification-only a=
+ddress that cannot accept incoming email. Find contact information on our <=
+a target=3D"_blank" href=3D"https://www.garmin.com/contact-us/">Contact Us<=
+/a> page.</div>
+      <div
+         style=3D"font-family:&#x27;Open Sans&#x27;, Helvetica, Arial, sans=
+-serif;;font-size:12px;line-height:20px;text-align:left;color:#6C6C6C;"
+      >=C2=A9 2026 Garmin Ltd. or its subsidiaries. All rights reserved. Ga=
+rmin International, 1200 E. 151st Street, Olathe, KS, 66062</div>
+  </body>
+</html>
+ =20
+------=_Part_386526_778672611.1783234228862--

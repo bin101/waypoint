@@ -1,0 +1,14 @@
+services:
+  waypoint:
+    image: ghcr.io/bin101/waypoint:latest
+    # Uncomment to build from source instead of pulling the published image:
+    # build: .
+    env_file: .env
+    ports:
+      - "8080:8080"
+    volumes:
+      - waypoint-data:/data
+    restart: unless-stopped
+
+volumes:
+  waypoint-data:
