@@ -176,10 +176,10 @@ and the web routes (via Flask's test client) — all without needing a real IMAP
 
 ### Branching and releases
 
-- `develop` is the integration branch — feature branches and day-to-day work target `develop` via
-  PR. Pushes here (and PRs) only run the test suite (`.github/workflows/ci.yml`); nothing gets
-  built or released.
-- `main` only ever moves forward via a PR from `develop`. Every push to `main` runs
+- Feature branches merge directly into `main` via PR — there is no `develop`/integration branch.
+  PRs only run the test suite (`.github/workflows/ci.yml`); nothing gets built or released until
+  the PR is merged.
+- Every push to `main` runs
   [Release Please](https://github.com/googleapis/release-please)
   (`.github/workflows/release-please.yml`), which inspects the
   [Conventional Commits](https://www.conventionalcommits.org/) merged in since the last release and

@@ -106,10 +106,9 @@ the test stage, never test files themselves). `HEALTHCHECK` hits `/healthz` with
 
 ### Branching, versioning & release pipeline
 
-`develop` is the integration branch (feature branches → PR → `develop`); `main` only moves via a
-PR from `develop`.
+Feature branches merge directly into `main` via PR — there is no `develop`/integration branch.
 
-- `.github/workflows/ci.yml` — the `test` job, on every push (`main`/`develop`) and every PR.
+- `.github/workflows/ci.yml` — the `test` job, on every push to `main` and every PR.
 - `.github/workflows/release-please.yml` — runs on every push to `main`. Its `release-please` job
   runs [Release Please](https://github.com/googleapis/release-please) (config:
   `release-please-config.json` + `.release-please-manifest.json`), which never pushes to `main`

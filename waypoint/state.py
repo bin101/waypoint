@@ -12,7 +12,7 @@ from typing import List, Optional
 
 log = logging.getLogger("waypoint.state")
 
-MAX_HISTORY = 20
+MAX_HISTORY = 25
 STATE_FILENAME = "state.json"
 
 
