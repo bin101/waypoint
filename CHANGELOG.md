@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/bin101/waypoint/compare/v0.2.1...v0.3.0) (2026-07-10)
+
+
+### Features
+
+* raise link history cap from 20 to 25 entries ([e3eb322](https://github.com/bin101/waypoint/commit/e3eb322525a4e9aa0bd940c909ef30dd63b6732c))
+
 ## [0.2.1](https://github.com/bin101/waypoint/compare/v0.2.0...v0.2.1) (2026-07-10)
 
 
