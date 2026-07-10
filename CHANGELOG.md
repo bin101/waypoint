@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/bin101/waypoint/compare/v0.2.0...v0.2.1) (2026-07-10)
+
+
+### Bug Fixes
+
+* run the Docker build in the same workflow run as release-please ([767aa20](https://github.com/bin101/waypoint/commit/767aa205c19e150134fe02dc041f77c5461b9c8e))
+
 ## [0.2.0](https://github.com/bin101/waypoint/compare/v0.1.0...v0.2.0) (2026-07-10)
 
 
