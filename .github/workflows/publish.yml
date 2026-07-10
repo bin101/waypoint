@@ -1,14 +1,19 @@
-name: Build and publish Docker image
+name: Manually rebuild and publish a release
 
-# Fires only on a vX.Y.Z tag -- which only ever exists once release-please
-# (see release-please.yml) has cut an actual release by merging its release
-# PR. A plain push to main/develop never reaches this workflow at all, so
-# the multi-arch build only ever runs for a real release.
+# Manual fallback only. The normal path is the `build` job inside
+# release-please.yml, which runs automatically in the same workflow run as
+# the release -- see that file's header comment for why this can't instead
+# be a plain `on: push: tags:` workflow (GITHUB_TOKEN-created tags don't
+# trigger other workflow runs). Use this to re-publish an existing vX.Y.Z
+# release on demand, e.g. after a GHCR outage or a manual retry.
 
 on:
-  push:
-    tags: ["v*.*.*"]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing vX.Y.Z tag to rebuild and publish"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -26,6 +31,8 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
 
       - name: Set up QEMU (for linux/arm64)
         uses: docker/setup-qemu-action@v3
@@ -40,23 +47,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # docker/metadata-action reads the semver straight off the triggering
-      # tag ref (github.ref), so no manual version wiring is needed here --
-      # unlike the previous single-workflow setup where the build job had to
-      # check out a tag computed by an earlier job in the same run.
       - name: Extract image metadata (tags + OCI labels)
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{version}},value=${{ inputs.tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ inputs.tag }}
             type=raw,value=latest
 
-      # Build always runs as a "does the Dockerfile still build (and pass
-      # its embedded test stage)?" check; push is unconditional here since
-      # this workflow itself only ever runs for a real vX.Y.Z tag.
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:
