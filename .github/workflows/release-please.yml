@@ -1,0 +1,25 @@
+name: Release Please
+
+# Watches pushes to main and maintains a standing "release PR" that
+# accumulates Conventional Commits into the next semantic version +
+# CHANGELOG.md entry. Nothing is tagged or released automatically -- only
+# merging that PR (a normal, reviewable PR merge, not a bot pushing straight
+# to main) makes release-please cut the vX.Y.Z tag + GitHub Release. That
+# tag push is what publish.yml reacts to.
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

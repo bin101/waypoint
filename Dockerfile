@@ -44,7 +44,10 @@ USER waypoint
 EXPOSE 8080
 VOLUME ["/data"]
 
+# Reads WEB_PORT at check time (falling back to 8080) rather than
+# hard-coding it, since the CMD's JSON form doesn't get shell/env
+# substitution -- only the python process it execs does.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD ["python", "-c", "import sys,urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=3).status == 200 else 1)"]
+    CMD ["python", "-c", "import os,sys,urllib.request; port=os.environ.get('WEB_PORT','8080'); sys.exit(0 if urllib.request.urlopen(f'http://127.0.0.1:{port}/healthz', timeout=3).status == 200 else 1)"]
 
 CMD ["python", "-m", "waypoint"]

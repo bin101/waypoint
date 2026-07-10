@@ -7,6 +7,8 @@ and is mounted at all only once ADMIN_USER + ADMIN_PASSWORD are configured.
 """
 
 import functools
+import json
+import secrets
 from datetime import datetime, timezone
 from html import escape
 from typing import Callable, Optional
@@ -14,8 +16,28 @@ from typing import Callable, Optional
 from flask import Flask, Response, abort, jsonify, redirect, request, url_for
 
 from .config import Config
+from .email_monitor import LIVETRACK_LINK_RE
 from .link_probe import probe_iframe_embeddable
 from .state import AppState
+
+# How often the "no active session" placeholder polls for a session having
+# started, so a viewer who opens the shared link early doesn't have to
+# manually reload once one goes live.
+OFFLINE_REFRESH_SECONDS = 30
+
+
+def _js_string_literal(value: str) -> str:
+    """JSON-encode `value` for safe embedding inside an inline <script> block.
+
+    json.dumps alone is not enough: it doesn't escape '<' or '>', so a value
+    containing the literal text "</script>" would close the surrounding
+    <script> tag at the HTML-parser level -- before any JS engine ever sees
+    the string -- regardless of it being inside a quoted JS string. Escaping
+    '<', '>' and '&' to \\u escapes (the same fix Django's `json_script`
+    applies) neutralizes that without changing the decoded JS value.
+    """
+    encoded = json.dumps(value)
+    return encoded.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
 
 
 def render_page(link: Optional[str], *, use_iframe: bool, countdown: int, now: datetime) -> str:
@@ -24,6 +46,12 @@ def render_page(link: Optional[str], *, use_iframe: bool, countdown: int, now: d
     Three variants: an "offline" placeholder when no session is currently
     active, a redirect page with a JS countdown (default), or an iframe
     embed with a JS-based fallback link if the iframe fails to load.
+
+    `link` is HTML-escaped for attribute contexts (`escape(..., quote=True)`)
+    and encoded via `_js_string_literal` for the inline-JS context before
+    being interpolated -- it may come from the admin override, which (unlike
+    the email-extracted link) isn't guaranteed to match LIVETRACK_LINK_RE, so
+    it can't be trusted to be free of quotes/angle brackets.
     """
     timestamp = now.strftime("%m/%d/%Y %H:%M:%S")
 
@@ -32,6 +60,7 @@ def render_page(link: Optional[str], *, use_iframe: bool, countdown: int, now: d
 <html>
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="refresh" content="{OFFLINE_REFRESH_SECONDS}">
 <title>Garmin LiveTrack</title>
 <style>
 body {{ font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #f5f5f5; }}
@@ -49,6 +78,9 @@ body {{ font-family: Arial, sans-serif; text-align: center; padding: 50px; backg
 </div>
 </body>
 </html>"""
+
+    link_attr = escape(link, quote=True)
+    link_js = _js_string_literal(link)
 
     if use_iframe:
         return f"""<!DOCTYPE html>
@@ -82,11 +114,11 @@ window.onload = function() {{
 </script>
 </head>
 <body>
-<iframe id="track" src="{link}" onerror="handleIframeError()"></iframe>
+<iframe id="track" src="{link_attr}" onerror="handleIframeError()"></iframe>
 <div id="fallback" class="fallback">
 <h2>Garmin LiveTrack</h2>
 <p>The LiveTrack session cannot be embedded directly.</p>
-<p><a href="{link}" target="_blank">Open LiveTrack in a new tab</a></p>
+<p><a href="{link_attr}" target="_blank">Open LiveTrack in a new tab</a></p>
 <p style="color: #666; font-size: 14px;">Last updated: {timestamp}</p>
 </div>
 </body>
@@ -97,7 +129,7 @@ window.onload = function() {{
 <head>
 <meta charset="UTF-8">
 <title>Garmin LiveTrack - Redirecting</title>
-<meta http-equiv="refresh" content="{countdown}; url={link}">
+<meta http-equiv="refresh" content="{countdown}; url={link_attr}">
 <style>
 body {{ font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #f5f5f5; }}
 .container {{ max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
@@ -112,7 +144,7 @@ function updateCountdown() {{
   document.getElementById('countdown').textContent = countdown;
   countdown--;
   if (countdown < 0) {{
-    window.location.href = '{link}';
+    window.location.href = {link_js};
   }} else {{
     setTimeout(updateCountdown, 1000);
   }}
@@ -126,7 +158,7 @@ window.onload = function() {{ updateCountdown(); }};
 <h2>Redirecting to LiveTrack...</h2>
 <div class="countdown">Redirecting in <span id="countdown">{countdown}</span> seconds</div>
 <p>If the automatic redirect doesn't work:</p>
-<a href="{link}" class="link" target="_blank">Open LiveTrack</a>
+<a href="{link_attr}" class="link" target="_blank">Open LiveTrack</a>
 <div class="info"><p>Last updated: {timestamp}</p></div>
 </div>
 </body>
@@ -192,7 +224,11 @@ def create_app(
     app = Flask(__name__)
 
     def _check_auth(username: str, password: str) -> bool:
-        return username == config.admin_user and password == config.admin_password
+        # constant-time compares -- a `==` short-circuits on the first
+        # mismatching byte, which is timing-observable over enough requests.
+        return secrets.compare_digest(username, config.admin_user) and secrets.compare_digest(
+            password, config.admin_password
+        )
 
     def require_admin_auth(view):
         @functools.wraps(view)
@@ -243,8 +279,20 @@ def create_app(
     @require_admin_auth
     def admin_set_link():
         link = request.form.get("link", "").strip()
-        if link:
-            state.set_link(link, source="admin", iframe_ok=probe(link))
+        if not link:
+            return redirect(url_for("admin_dashboard"))
+        if not LIVETRACK_LINK_RE.fullmatch(link):
+            # Reject rather than store: render_page HTML-escapes/JSON-encodes
+            # whatever ends up here regardless, but restricting the admin
+            # override to the same shape as an extracted email link also
+            # closes off using it to probe/redirect to arbitrary internal
+            # URLs (see probe_iframe_embeddable).
+            return Response(
+                "Invalid link: expected a "
+                "https://livetrack.garmin.com/session/.../token/... URL",
+                400,
+            )
+        state.set_link(link, source="admin", iframe_ok=probe(link))
         return redirect(url_for("admin_dashboard"))
 
     @app.route("/admin/clear", methods=["POST"])
