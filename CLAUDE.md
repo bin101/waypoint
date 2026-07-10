@@ -107,17 +107,22 @@ the test stage, never test files themselves). `HEALTHCHECK` hits `/healthz` with
 ### Branching, versioning & release pipeline
 
 `develop` is the integration branch (feature branches → PR → `develop`); `main` only moves via a
-PR from `develop`. Three separate workflows split the concerns:
+PR from `develop`.
 
 - `.github/workflows/ci.yml` — the `test` job, on every push (`main`/`develop`) and every PR.
-- `.github/workflows/release-please.yml` — runs
-  [Release Please](https://github.com/googleapis/release-please) (config:
-  `release-please-config.json` + `.release-please-manifest.json`) on every push to `main`. It never
-  pushes to `main` directly: it maintains a standing release PR (version bump + `CHANGELOG.md`)
-  from Conventional Commits (`fix:`, `feat:`, `BREAKING CHANGE:`) and only cuts the `vX.Y.Z` tag +
-  GitHub Release once that PR is actually merged.
-- `.github/workflows/publish.yml` — triggers only on a `vX.Y.Z` tag push (i.e. only once
-  release-please has cut a release) and does the multi-arch Docker build + push to GHCR.
+- `.github/workflows/release-please.yml` — runs on every push to `main`. Its `release-please` job
+  runs [Release Please](https://github.com/googleapis/release-please) (config:
+  `release-please-config.json` + `.release-please-manifest.json`), which never pushes to `main`
+  directly: it maintains a standing release PR (version bump + `CHANGELOG.md`) from Conventional
+  Commits (`fix:`, `feat:`, `BREAKING CHANGE:`) and only cuts the `vX.Y.Z` tag + GitHub Release once
+  that PR is merged. The workflow's `build` job then runs the multi-arch Docker build + GHCR push,
+  gated on `release-please`'s `release_created` output, **in that same run** — it is deliberately
+  *not* a separate `on: push: tags:` workflow, because GitHub Actions won't let a tag created via
+  the default `GITHUB_TOKEN` (which is how release-please creates it) trigger another workflow run;
+  a separate publish workflow listening for that tag push would simply never fire. (Learned this the
+  hard way: the first release-please rollout cut `v0.2.0` with no Docker image to show for it.)
+- `.github/workflows/publish.yml` — manual-only (`workflow_dispatch`) fallback to rebuild/republish
+  an already-tagged release on demand.
 
 The version lives in `waypoint/__init__.py` (`__version__`, marked with a trailing
 `# x-release-please-version` comment that release-please's generic file updater matches on) — don't

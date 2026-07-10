@@ -186,8 +186,13 @@ and the web routes (via Flask's test client) — all without needing a real IMAP
   keeps a standing **release PR** up to date with the accumulated version bump and `CHANGELOG.md`
   entry — it never pushes to `main` directly.
 - Merging that release PR (like any other PR, via review) is what actually cuts the `vX.Y.Z` tag +
-  GitHub Release. Only that tag push triggers `.github/workflows/publish.yml`, which builds the
-  multi-arch image and publishes it to GHCR — a plain commit landing on `main` never does.
+  GitHub Release — and, in the same workflow run, builds the multi-arch image and publishes it to
+  GHCR. (The build has to live in that same run rather than a separate `on: push: tags:` workflow:
+  GitHub Actions doesn't let a tag created via the default `GITHUB_TOKEN` — which is how
+  release-please creates it — trigger a second workflow run.) A plain commit landing on `main`
+  never builds or publishes anything.
+- `.github/workflows/publish.yml` is a manual-only fallback (`workflow_dispatch`) for re-publishing
+  an existing tag on demand, e.g. after a registry outage.
 - Commit messages need a Conventional Commits prefix for Release Please to pick them up correctly:
   `fix:` → patch, `feat:` → minor, `BREAKING CHANGE:` (in the footer) → major. Anything else
   (`chore:`, `docs:`, `test:`, ...) is included in the changelog but doesn't bump the version.

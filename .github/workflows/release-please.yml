@@ -4,8 +4,15 @@ name: Release Please
 # accumulates Conventional Commits into the next semantic version +
 # CHANGELOG.md entry. Nothing is tagged or released automatically -- only
 # merging that PR (a normal, reviewable PR merge, not a bot pushing straight
-# to main) makes release-please cut the vX.Y.Z tag + GitHub Release. That
-# tag push is what publish.yml reacts to.
+# to main) makes release-please cut the vX.Y.Z tag + GitHub Release.
+#
+# The Docker build/publish job below runs in the SAME workflow run,
+# triggered off release-please's own step outputs -- NOT off a separate
+# `on: push: tags:` workflow. GitHub Actions deliberately does not let a ref
+# (tag/branch) created using the default GITHUB_TOKEN trigger further
+# workflow runs (recursion guard), and that's exactly how release-please
+# creates its tag, so a second workflow listening for that tag push would
+# never fire. Continuing in this same run sidesteps that entirely.
 
 on:
   push:
@@ -15,11 +22,69 @@ permissions:
   contents: write
   pull-requests: write
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    outputs:
+      # release-please-action's output naming has changed across versions
+      # (bare vs. "<path>--"-prefixed once a config/manifest file is used);
+      # the fallback covers whichever this action version actually emits.
+      release_created: ${{ steps.release.outputs.release_created || steps.release.outputs['.--release_created'] }}
+      tag_name: ${{ steps.release.outputs.tag_name || steps.release.outputs['.--tag_name'] }}
     steps:
       - uses: googleapis/release-please-action@v4
+        id: release
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+  build:
+    name: Build and push image
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
+
+      - name: Set up QEMU (for linux/arm64)
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract image metadata (tags + OCI labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.release-please.outputs.tag_name }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.release-please.outputs.tag_name }}
+            type=raw,value=latest
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
